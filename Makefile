@@ -2,8 +2,9 @@
 # https://precice.org/adapter-calculix-get-calculix.html
 # Set the following variables before building:
 # Path to original CalculiX source (e.g. $(HOME)/ccx_2.xx/src )
-CCX_VERSION			= 2.20
-CCX             = $(HOME)/CalculiX/ccx_$(CCX_VERSION)/src
+CCX_VERSION		= 2.21
+CCX             = $(HOME)/projects/ccx/ccx_$(CCX_VERSION)
+CCX_FLAGS       = -DSPOOLES -DPARDISO -DARPACK -DMATRIXSTORAGE -DUSE_MT
 
 ### Change these if you built SPOOLES, ARPACK, or yaml-cpp from source ###
 # SPOOLES include flags (e.g. -I$(HOME)/SPOOLES.2.2 )
@@ -15,6 +16,11 @@ SPOOLES_LIBS      = -lspooles
 ARPACK_INCLUDE    =
 # ARPACK library flags (e.g. $(HOME)/ARPACK/libarpack_INTEL.a)
 ARPACK_LIBS       = -larpack -llapack -lblas
+
+# PARDISO (Intel MKL) include flags (e.g. )
+PARDISO_INCLUDE   = -I/opt/intel/oneapi/mkl/2023.1.0/include
+PARDISO_LIBS      = -L/opt/intel/oneapi/mkl/2023.1.0/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -lmkl_blacs_intelmpi_lp64 -lgomp -lpthread -lm -ldl
+
 #
 # yaml-cpp include flags (e.g. -I$(HOME)/yaml-cpp/include)
 YAML_INCLUDE      = -I/usr/include/
@@ -38,6 +44,7 @@ INCLUDES = \
 	$(SPOOLES_INCLUDE) \
 	$(PKGCONF_CFLAGS) \
 	$(ARPACK_INCLUDE) \
+	$(PARDISO_INCLUDE) \
 	$(YAML_INCLUDE)
 
 LIBS = \
@@ -46,13 +53,14 @@ LIBS = \
 	-lstdc++ \
 	$(YAML_LIBS) \
 	$(ARPACK_LIBS) \
+	$(PARDISO_LIBS) \
 	-lpthread -lm -lc
 
 # Compilers and flags
 #CFLAGS = -g -Wall -std=c++11 -O0 -fopenmp $(INCLUDES) -DARCH="Linux" -DSPOOLES -DARPACK -DMATRIXSTORAGE
 #FFLAGS = -g -Wall -O0 -fopenmp $(INCLUDES)
 
-CFLAGS = -Wall -O3 -fopenmp $(INCLUDES) -DARCH="Linux" -DSPOOLES -DARPACK -DMATRIXSTORAGE -DUSE_MT
+CFLAGS = -Wall -O3 -fopenmp $(INCLUDES) -DARCH="Linux" $(CCX_FLAGS)
 
 # OS-specific options
 UNAME_S := $(shell uname -s)
@@ -64,9 +72,9 @@ endif
 
 FFLAGS = -Wall -O3 -fopenmp $(INCLUDES) ${ADDITIONAL_FFLAGS}
 # Note for GCC 10 or newer: add -fallow-argument-mismatch in the above flags
-FC = mpifort
+# FC = mpifort
 # FC = mpif90
-# FC = gfortran
+FC = gfortran
 
 # Include a list of all the source files
 include $(CCX)/Makefile.inc
